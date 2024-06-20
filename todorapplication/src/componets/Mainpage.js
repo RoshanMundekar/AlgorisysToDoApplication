@@ -145,28 +145,12 @@ export default function Mainpage() {
         }));
     };
 
-    const filteredTodos1 = todos.filter(todo => todo.status !== 'Completed');
-
-    const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 2; // Number of items per page
-
-    // Calculate total pages based on data length and items per page
-    const totalPages = Math.ceil(filteredTodos1.length / itemsPerPage);
-
-    // Get the current page's items
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const currentItems = filteredTodos1.slice(startIndex, startIndex + itemsPerPage);
-
-    const handlePageChange = (page) => {
-        if (page > 0 && page <= totalPages) {
-            setCurrentPage(page);
-        }
-    };
 
 
 
 
- 
+
+
 
     const [searchQuery, setSearchQuery] = useState('');
     // Filter todos based on search query
@@ -261,21 +245,21 @@ export default function Mainpage() {
     const handleEditClick1 = (todo) => {
         setCurrentTodo1(todo);
         setShowModal1(true);
-        fetchTableData(todo[2],todo[0]);
+        fetchTableData(todo[2], todo[0]);
     };
 
     const handleCloseModal1 = () => {
         setShowModal1(false);
         setCurrentTodo1(null);
-        setTableData([]); 
+        setTableData([]);
     };
 
-    const fetchTableData = ( categoryId,todoid) => {
-      
+    const fetchTableData = (categoryId, todoid) => {
+
         const user_id = JSON.parse(localStorage.getItem('user'))[0];
         axios.get(`${ipofserver}getcatgory/user?user_id=${user_id}&categoryId=${categoryId}&todoid=${todoid}`)
             .then(response => {
-                
+
                 setTableData(response.data); // Assuming response.data is an array of table rows
             })
             .catch(error => {
@@ -283,9 +267,59 @@ export default function Mainpage() {
                 // Handle error as needed
             });
     };
+
+
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 3; // Set the number of items per page
+    const totalPages = Math.ceil(filteredTodos.length / itemsPerPage);
+
+    // Function to handle page change
+    const handlePageChange = (pageNumber) => {
+        setCurrentPage(pageNumber);
+    };
+
+
+    // Get the current items based on the current page
+    const currentTodos = filteredTodos.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+
+    const [selectedItems1, setSelectedItems1] = useState({});
+    const [selectAll1, setSelectAll1] = useState(false);
+    const [filterCompleted, setFilterCompleted] = useState(false);
+    const [filterOnHold, setFilterOnHold] = useState(false);
+
+    const handleSelectAllChange1 = () => {
+        setSelectAll(!selectAll);
+    };
+
+    const handleFilterCompletedChange = () => {
+        setFilterCompleted(!filterCompleted);
+    };
+
+    const handleFilterOnHoldChange = () => {
+        setFilterOnHold(!filterOnHold);
+    };
+
+    useEffect(() => {
+        const newSelectedItems = {};
+        if (selectAll) {
+            filteredTodos.forEach(todo => {
+                newSelectedItems[todo[0]] = true;
+            });
+        }
+        setSelectedItems(newSelectedItems);
+    }, [selectAll, filteredTodos]);
+
+
+
+    const filteredBySelection = currentTodos.filter(todo => {
+        if (selectAll1) return true;
+        if (filterCompleted && todo[4] === 'Completed') return true;
+        if (filterOnHold && todo[4] === 'In-Hold') return true;
+        return selectedItems1[todo[0]];
+    });
+
     
-
-
 
 
     return (
@@ -345,6 +379,8 @@ export default function Mainpage() {
                                         type="checkbox"
                                         className="checkAll"
                                         name="checkAll"
+                                        checked={selectAll1}
+                                        onChange={handleSelectAllChange1}
                                         style={{ width: '20px', height: '20px', transform: 'scale(1.5)', cursor: 'pointer', marginLeft: '20px' }}
                                     />
                                     <label htmlFor="checkAll" style={{ marginLeft: '10px', fontSize: '1.2rem' }}>Select All</label>
@@ -353,7 +389,9 @@ export default function Mainpage() {
                                     <input
                                         type="checkbox"
                                         className="checkAll"
-                                        name="checkAll"
+                                        name="filterCompleted"
+                                        checked={filterCompleted}
+                                        onChange={handleFilterCompletedChange}
                                         style={{ width: '20px', height: '20px', transform: 'scale(1.5)', cursor: 'pointer', marginLeft: '20px' }}
                                     />
                                     <label htmlFor="checkAll" style={{ marginLeft: '10px', fontSize: '1.2rem' }}>Completed</label>
@@ -362,7 +400,9 @@ export default function Mainpage() {
                                     <input
                                         type="checkbox"
                                         className="checkAll"
-                                        name="checkAll"
+                                        name="filterOnHold"
+                                        checked={filterOnHold}
+                                        onChange={handleFilterOnHoldChange}
                                         style={{ width: '20px', height: '20px', transform: 'scale(1.5)', cursor: 'pointer', marginLeft: '20px' }}
                                     />
                                     <label htmlFor="checkAll" style={{ marginLeft: '10px', fontSize: '1.2rem' }}>On Hold</label>
@@ -371,9 +411,9 @@ export default function Mainpage() {
                         </tr>
                     </thead>
                     <tbody>
-
-                        {filteredTodos.map((todo, index) => {
-                            return <tr>
+                    {(filteredBySelection.length > 0 ? filteredBySelection : currentTodos).map((todo, index) => {
+                        {/* {currentTodos.map((todo, index) => { */}
+                            return <tr key={index}>
 
                                 <td>
 
@@ -382,7 +422,7 @@ export default function Mainpage() {
                                     <input type="checkbox" value={todo[0]}
                                         checked={selectedItems[todo[0]] || false}
                                         onChange={() => handleCheckboxChange(todo[0])} className='checkAll' name="item[]" />
-                                    <label htmlFor="checkAll" style={{ marginLeft: '10px', fontSize: '1.2rem' }}>{todo[3]}</label>
+                                    <label htmlFor="checkAll" style={{ marginLeft: '10px', fontSize: '1.2rem', color: 'black' }}>{todo[3]}</label>
                                 </td>
                                 <td>
                                     <div className="dropdown-container">
